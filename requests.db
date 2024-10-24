@@ -1,0 +1,24 @@
+CREATE TABLE pending_requests (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_name VARCHAR(100),
+    dates_requested VARCHAR(100),
+    edit_date DATE,
+    leave_type VARCHAR(50),
+    status VARCHAR(20)
+);
+
+CREATE TABLE approved_requests (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_name VARCHAR(100),
+    leave_type VARCHAR(50),
+    used_days INT,
+    days_remaining INT
+);
+
+CREATE TABLE staff (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100),
+    position VARCHAR(100),
+    leave_category VARCHAR(50),
+    status VARCHAR(20)
+);
