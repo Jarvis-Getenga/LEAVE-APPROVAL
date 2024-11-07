@@ -3,14 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leave Management</title>
-    <link rel="stylesheet" href="requests.css"> <!-- Link to CSS -->
+    <title>Pending Requests</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            width: 600px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-approve {
+            background-color: #28a745;
+        }
+        .btn-decline {
+            background-color: #dc3545;
+        }
+        .comment-input {
+            width: 100%;
+            height: 100px;
+            padding: 8px;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+        }
+        .date-input {
+            width: 100%;
+            padding: 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .submit-btn {
+            padding: 10px;
+            color: white;
+            background-color: #007bff;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .back-btn {
+            padding: 10px;
+            color: white;
+            background-color: #007bff;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <!-- Pending Requests -->
         <h2>Pending Requests</h2>
-        <table class="table">
+        <table>
             <thead>
                 <tr>
                     <th>Employee Name</th>
@@ -22,24 +102,58 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
+                <tr id="request-1">
                     <td>John Doe</td>
-                    <td>8/8/2024-20/8/2024</td>
-                    <td>8/8/2024</td>
+                    <td>8/8/2024 - 20/8/2024</td>
+                    <td>
+                        <input type="date" class="date-input" id="edit-date-1" value="2024-08-08">
+                    </td>
                     <td>Sick Leave</td>
                     <td>
-                        <button class="btn decline">Decline</button>
-                        <button class="btn approve">Approve</button>
+                        <button class="btn btn-decline" onclick="updateRequest(1, 'decline')">Decline</button>
+                        <button class="btn btn-approve" onclick="updateRequest(1, 'approve')">Approve</button>
+                    </td>
+                    <td>
+                        <textarea class="comment-input" id="comment-1" placeholder="Add comment"></textarea>
                     </td>
                 </tr>
-                <!-- Repeat for other requests -->
             </tbody>
         </table>
-        <button class="btn submit">Submit Approval</button>
-
-          
-        
-        
+        <button class="back-btn" onclick="window.location.href='dashboard.html'"> HOME PAGE</button>
     </div>
+
+    <script>
+        function updateRequest(leaveId, action) {
+            const managerId = 1; // Assuming manager ID is 1 (replace with actual manager ID in real app)
+            const comment = document.getElementById(`comment-${leaveId}`).value;
+            const editDate = document.getElementById(`edit-date-${leaveId}`).value;
+
+            // Create form data to send to PHP backend
+            const formData = new FormData();
+            formData.append('leave_id', leaveId);
+            formData.append('user_id', managerId);
+            formData.append('action', action); // 'approve' or 'decline'
+            formData.append('comment', comment);
+
+            fetch('leave_manager.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert(`Request ${action}d successfully!`);
+                    document.getElementById(`request-${leaveId}`).style.display = 'none';
+                } else {
+                    alert(`Error: ${data.message}`);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to update request.');
+            });
+        }
+    </script>
+    
 </body>
 </html>

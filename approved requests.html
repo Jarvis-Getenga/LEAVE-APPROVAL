@@ -1,39 +1,175 @@
-  <html lang="en">
-  <head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link rel="stylesheet" href="requests.css">
-  </head>
-  <body>
+    <title>Pending Requests</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            width: 700px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-approve {
+            background-color: #28a745;
+        }
+        .btn-decline {
+            background-color: #dc3545;
+        }
+        .comment-input {
+            width: 100%;
+            height: 80px;
+            padding: 8px;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+        }
+        .date-input {
+            width: 100%;
+            padding: 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .back-btn {
+            padding: 10px;
+            color: white;
+            background-color: #007bff;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
     <div class="container">
-     <!-- Approved Requests -->
-  <h2>Approved Requests</h2>
-  <table class="table">
-      <thead>
-          <tr>
-              <th>Employee Name</th>
-              <th>Leave Type</th>
-              <th>Used Days</th>
-              <th>Days Remaining</th>
-              <th>Actions</th>
-          </tr>
-      </thead>
-      <tbody>
-          <tr>
-              <td>John Doe</td>
-              <td>Annual Leave</td>
-              <td>5</td>
-              <td>12</td>
-              <td>
-                  <button class="btn extend">Extend</button>
-                  <button class="btn revoke">Revoke</button>
-              </td>
-          </tr>
-          <!-- Repeat for other approved requests -->
-      </tbody>
-  </table>
-</div>
-  </body>
-  </html>
- 
+        <h2>Pending Requests</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Employee Name</th>
+                    <th>Dates Requested</th>
+                    <th>End Date</th>
+                    <th>Leave Type</th>
+                    <th>Used Days</th>
+                    <th>Days Remaining</th>
+                    
+                </tr>
+            </thead>
+            <tbody id="requests-table">
+                <!-- Rows will be populated by JavaScript -->
+            </tbody>
+        </table>
+        <button class="back-btn" onclick="window.location.href='main.php'">HOME PAGE </button>
+    </div>
+
+    <script>
+        // Load requests from the server
+        function loadRequests() {
+            fetch('fetch_requests.php')
+                .then(response => response.json())
+                .then(data => {
+                    const requestsTable = document.getElementById('requests-table');
+                    requestsTable.innerHTML = '';
+
+                    data.forEach(request => {
+                        const row = document.createElement('tr');
+                        row.id = `request-${request.leave_id}`;
+                        row.innerHTML = `
+                            <td>${request.employee_name}</td>
+                            <td>${request.start_date} - ${request.end_date}</td>
+                            <td>
+                                <input type="date" class="date-input" id="edit-date-${request.leave_id}" value="${request.edit_date}">
+                            </td>
+                            <td>${request.leave_type}</td>
+                            <td>${request.used_leave}</td>
+                            <td>${request.days_remaining}</td>
+                            <td>
+                                <button class="btn btn-decline" onclick="updateRequest(${request.leave_id}, 'decline')">Decline</button>
+                                <button class="btn btn-approve" onclick="updateRequest(${request.leave_id}, 'approve')">Approve</button>
+                            </td>
+                            <td>
+                                <textarea class="comment-input" id="comment-${request.leave_id}" placeholder="Add comment"></textarea>
+                            </td>
+                        `;
+                        requestsTable.appendChild(row);
+                    });
+                })
+                .catch(error => console.error('Error loading requests:', error));
+        }
+
+        // Update request approval or decline
+        function updateRequest(leaveId, action) {
+            const managerId = 1; // Assuming manager ID is 1 (replace with actual manager ID in real app)
+            const comment = document.getElementById(`comment-${leaveId}`).value;
+            const editDate = document.getElementById(`edit-date-${leaveId}`).value;
+
+            // Create form data to send to PHP backend
+            const formData = new FormData();
+            formData.append('leave_id', leaveId);
+            formData.append('manager_id', managerId);
+            formData.append('action', action); // 'approve' or 'decline'
+            formData.append('comment', comment);
+            formData.append('edit_date', editDate);
+
+            fetch('leave_manager.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert(`Request ${action}d successfully!`);
+                    document.getElementById(`request-${leaveId}`).style.display = 'none';
+                } else {
+                    alert(`Error: ${data.message}`);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to update request.');
+            });
+        }
+
+        // Load requests on page load
+        document.addEventListener('DOMContentLoaded', loadRequests);
+    </script>
+</body>
+</html>
